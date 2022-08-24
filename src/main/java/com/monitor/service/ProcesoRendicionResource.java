@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -92,6 +93,14 @@ public class ProcesoRendicionResource {
 	}
 
 	return new ProcesoRendicion();
+    }
+    
+    @Path("/{oid}/leido")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public ProcesoRendicion marcarComoLeido(@PathParam("oid") String oid){
+	notificacionProcesoService.marcarComoLeido(oid);
+	return null;
     }
 
     private void sendMail(NotificacionProceso notificacion) {

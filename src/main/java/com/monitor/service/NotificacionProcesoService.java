@@ -3,6 +3,8 @@ package com.monitor.service;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import static com.mongodb.client.model.Filters.eq;
+import com.mongodb.client.model.Updates;
 import com.monitor.model.NotificacionProceso;
 import com.monitor.model.ProcesoRendicion;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 @ApplicationScoped
@@ -61,7 +64,7 @@ public class NotificacionProcesoService {
 
     public NotificacionProceso getNotificacionProcesoByIdProceso(Integer idProceso) {
 	Document documentNotificacion = (Document) getCollection().find(Filters.eq("idProceso", idProceso)).first();
-	if(documentNotificacion == null){
+	if (documentNotificacion == null) {
 	    return null;
 	}
 	NotificacionProceso notificacion = new NotificacionProceso();
@@ -70,8 +73,18 @@ public class NotificacionProcesoService {
 	notificacion.setLeido(documentNotificacion.getBoolean("leido"));
 	//no se está cargando el detalle de los procesos leídos para la notificación.
 	//Cargarlos en caso de ser necesario.
-	
+
 	return notificacion;
+    }
+
+    public void marcarComoLeido(String oid) {
+	System.out.println(oid);
+	Document documentNotificacion = (Document) getCollection().find(Filters.eq("_id", new ObjectId(oid))).first();
+	System.out.println(documentNotificacion);
+	if (documentNotificacion != null) {
+	    System.out.println("Existe");
+	    getCollection().updateOne(eq("_id", new ObjectId(oid)), Updates.set("leido", true));
+	}
     }
 
     private MongoCollection getCollection() {
