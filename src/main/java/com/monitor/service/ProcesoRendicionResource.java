@@ -95,6 +95,13 @@ public class ProcesoRendicionResource {
 	return new ProcesoRendicion();
     }
     
+    @Path("/notificacion/noleido")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public NotificacionProceso getNoLeido(){
+	return notificacionProcesoService.getNotificacionesNoLeidas();
+    }
+    
     @Path("/{oid}/leido")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -125,7 +132,7 @@ public class ProcesoRendicionResource {
 
 	mailer.send(Mail.withText(
 		destinatarios,
-		"Notificación de proceso de rendición demorado",
+		"¡ATENCIÓN! - RETRASO EN PROCESO RENDICIÓN #" + notificacion.getIdProceso() + " EPS " + notificacion.getProcesosRendicion().get(0).getNombreEps(),
 		content
 	));
     }

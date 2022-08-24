@@ -7,6 +7,8 @@ import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.Updates;
 import com.monitor.model.NotificacionProceso;
 import com.monitor.model.ProcesoRendicion;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
@@ -78,13 +80,51 @@ public class NotificacionProcesoService {
     }
 
     public void marcarComoLeido(String oid) {
-	System.out.println(oid);
 	Document documentNotificacion = (Document) getCollection().find(Filters.eq("_id", new ObjectId(oid))).first();
-	System.out.println(documentNotificacion);
 	if (documentNotificacion != null) {
-	    System.out.println("Existe");
 	    getCollection().updateOne(eq("_id", new ObjectId(oid)), Updates.set("leido", true));
 	}
+    }
+
+    public NotificacionProceso getNotificacionesNoLeidas() {
+	
+	Document notificacionProceso = (Document) getCollection().find(Filters.eq("leido", false)).first();
+	if (notificacionProceso == null) {
+	    return new NotificacionProceso();
+	}
+
+	NotificacionProceso not = new NotificacionProceso();
+	not.setId(notificacionProceso.getObjectId("_id"));
+	not.setIdProceso(notificacionProceso.getInteger("idProceso"));
+	not.setLeido(notificacionProceso.getBoolean("leido"));
+	not.setTiempoPermitido(notificacionProceso.getInteger("tiempoPermitido"));
+	List<Document> procesos = notificacionProceso.getList("procesosRendicion", Document.class);
+	if (procesos != null) {
+	    List<ProcesoRendicion> procesosRendicion = new ArrayList();
+	    int cont = 0;
+	    for (Document docProceso : procesos) {
+		ProcesoRendicion proceso = new ProcesoRendicion();
+		proceso.setIdProceso(docProceso.getInteger("idProceso"));
+		proceso.setIdEmpresa(docProceso.getString("idEmpresa"));
+		proceso.setNombreEps(docProceso.getString("nombreEps"));
+		proceso.setCodEstado(docProceso.getInteger("codEstado"));
+		proceso.setEstadoProceso(docProceso.getString("estadoProceso"));
+		proceso.setFechaProceso(docProceso.getDate("fechaProceso").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		proceso.setFechaCreacion(docProceso.getDate("fechaCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		proceso.setInicioProceso(docProceso.getDate("inicioProceso").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		proceso.setFinProceso(docProceso.getDate("finProceso").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		proceso.setFechaIso(docProceso.getString("fechaIso"));
+		proceso.setIdDefinicionArchivos(docProceso.getInteger("idDefinicionArchivos"));
+		proceso.setTipoCorte(docProceso.getInteger("tipoCorte"));
+		proceso.setIdTarea(docProceso.getInteger("idTarea"));
+		proceso.setHoraEjecucion(docProceso.getString("horaEjecucion"));
+		proceso.setVigente(docProceso.getString("vigente"));
+		proceso.setFechaHoraConsulta(docProceso.getDate("fechaHoraConsulta").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		procesosRendicion.add(proceso);
+	    }
+	    not.setProcesosRendicion(procesosRendicion);
+	}
+	return not;
     }
 
     private MongoCollection getCollection() {
