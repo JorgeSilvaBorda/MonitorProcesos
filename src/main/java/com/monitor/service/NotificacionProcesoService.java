@@ -22,11 +22,11 @@ public class NotificacionProcesoService {
     MongoClient mongoClient;
 
     public NotificacionProceso postNotificacionProceso(NotificacionProceso notificacion) {
-	System.out.println("Entra a guardar");
 	Document documentNotificacion = new Document();
 	documentNotificacion
 		.append("idProceso", notificacion.getIdProceso())
-		.append("leido", notificacion.isLeido());
+		.append("leido", notificacion.isLeido())
+		.append("tiempoPermitido", notificacion.getTiempoPermitido());
 
 	List<Document> documentsProcesosRendicion = new ArrayList();
 	for (ProcesoRendicion proc : notificacion.getProcesosRendicion()) {

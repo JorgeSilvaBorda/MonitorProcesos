@@ -49,21 +49,17 @@ public class ProcesoRendicionResource {
 
 	//1.- Buscar proceso en ejecución (EstadoEjecución = 26)
 	ProcesoRendicion procesoActual = mapper.buscarEnEjecucion();
-	System.out.println("paso 1");
 
 	//En caso de que exista un proceso en ejecución:
 	if (procesoActual != null) {
-	    System.out.println("es distinto de null");
 	    //antes de proceder, se debe validar si ya existe una alerta generada para el proceso
 	    NotificacionProceso notificacion = notificacionProcesoService.getNotificacionProcesoByIdProceso(procesoActual.getIdProceso());
-	    if(notificacion != null){
-		System.out.println("Existen notificaciones anteriores");
+	    if (notificacion != null) {
 		return new ProcesoRendicion();
 	    }
-	    System.out.println("no existen notificaciones anteriores");
 	    //Se debe guardar el que se está leyendo para que aparezca en la lista de más abajo
 	    procesoRendicionService.insProcesoRendicionActivo(procesoActual);
-	    
+
 	    //2.- Traer listado de procesos con el mismo IdProceso
 	    List<ProcesoRendicion> procesosRendicion = procesoRendicionService.getProcesosMonitorByIdProceso(procesoActual.getIdProceso());
 
@@ -78,36 +74,50 @@ public class ProcesoRendicionResource {
 		    proc = procesosRendicion.get(i);
 		}
 		LocalDateTime fechaHoraUltimaLectura = procesoActual.getFechaHoraConsulta();
-		
-		System.out.println("Los minutos totales son: " + minutos);
-		
-		if (minutos > new Parametros().getMaxMinutosEspera()) {    
+
+
+		if (minutos > new Parametros().getMaxMinutosEspera()) {
 		    //Guardar mensaje de alerta
 		    NotificacionProceso notificacionProceso = new NotificacionProceso();
 		    notificacionProceso.setIdProceso(procesoActual.getIdProceso());
 		    notificacionProceso.setLeido(false);
 		    notificacionProceso.setProcesosRendicion(procesosRendicion);
+		    notificacionProceso.setTiempoPermitido(new Parametros().getMaxMinutosEspera());
 		    notificacionProcesoService.postNotificacionProceso(notificacionProceso);
-		    
+
 		    //Enviar email a los interesados
-		    sendMail(notificacionProceso, minutos);
+		    sendMail(notificacionProceso);
 		}
 	    }
 	}
 
 	return new ProcesoRendicion();
     }
-    
-    private void sendMail(NotificacionProceso notificacion, Long minutos){
+
+    private void sendMail(NotificacionProceso notificacion) {
 	String destinatarios = ConfigProvider.getConfig().getValue("destinatarios-notificacion", String.class);
-	
-	String contenido = "Le informamos que el proceso con ID: " + notificacion.getIdProceso() + ", se encuentra en ejecución por más del tiempo permitido (" + minutos + " minutos).\n"
-		+ "Se emitirá una alerta hacia el dashboard de control de procesos en conjunto con este email.";
-	
+
+	String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
+	content += "<h2>Informe de proceso demorado</h2>";
+	content += "<br />";
+	content += "<p>Un proceso de Rendiciones ha tomado en ejecución más tiempo del configurado como permitido, por lo que se ha generado esta alerta para informar del estado en ejecución.</p>";
+	content += "<h3>Detalle:</h3>";
+	content += "<ul>";
+	content += "<li>Id Proceso: <strong>" + notificacion.getIdProceso() + "</strong></li>";
+	content += "<li>Id Empresa: <strong>" + notificacion.getProcesosRendicion().get(0).getIdEmpresa() + "</strong></li>";
+	content += "<li>Empresa: <strong>" + notificacion.getProcesosRendicion().get(0).getNombreEps() + "</strong></li>";
+	content += "</ul>";
+	content += "<br />";
+	content += "<p>El tiempo máximo de espera configurado es de " + notificacion.getTiempoPermitido() + " minutos, y ha sido superado por este proceso.</p>";
+	content += "<br />";
+	content += "<br />";
+	content += "<p>Este es un mensaje generado automáticamente. Por favor no responda este correo.</p>";
+	content += "</body></html>";
+
 	mailer.send(Mail.withText(
-		destinatarios, 
-		"Notificación de proceso de rendición demorado", 
-		contenido
+		destinatarios,
+		"Notificación de proceso de rendición demorado",
+		content
 	));
     }
 

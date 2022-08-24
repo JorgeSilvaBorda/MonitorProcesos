@@ -7,15 +7,17 @@ public class NotificacionProceso{
     private ObjectId _id;
     private Integer idProceso;
     private boolean leido;
+    private Integer tiempoPermitido;
     private List<ProcesoRendicion> procesosRendicion;
 
     public NotificacionProceso() {
     }
 
-    public NotificacionProceso(ObjectId _id, Integer idProceso, boolean leido, List<ProcesoRendicion> procesosRendicion) {
+    public NotificacionProceso(ObjectId _id, Integer idProceso, boolean leido, Integer tiempoPermitido, List<ProcesoRendicion> procesosRendicion) {
 	this._id = _id;
 	this.idProceso = idProceso;
 	this.leido = leido;
+	this.tiempoPermitido = tiempoPermitido;
 	this.procesosRendicion = procesosRendicion;
     }
 
@@ -41,6 +43,14 @@ public class NotificacionProceso{
 
     public void setLeido(boolean leido) {
 	this.leido = leido;
+    }
+    
+    public Integer getTiempoPermitido(){
+	return tiempoPermitido;
+    }
+    
+    public void setTiempoPermitido(Integer tiempoPermitido){
+	this.tiempoPermitido = tiempoPermitido;
     }
 
     public List<ProcesoRendicion> getProcesosRendicion() {
