@@ -7,6 +7,7 @@ import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -76,7 +77,6 @@ public class ProcesoRendicionResource {
 		}
 		LocalDateTime fechaHoraUltimaLectura = procesoActual.getFechaHoraConsulta();
 
-
 		if (minutos > new Parametros().getMaxMinutosEspera()) {
 		    //Guardar mensaje de alerta
 		    NotificacionProceso notificacionProceso = new NotificacionProceso();
@@ -94,27 +94,27 @@ public class ProcesoRendicionResource {
 
 	return new ProcesoRendicion();
     }
-    
+
     @Path("/notificacion/noleido")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public NotificacionProceso getNoLeido(){
+    public List<NotificacionProceso> getNoLeido() {
 	return notificacionProcesoService.getNotificacionesNoLeidas();
     }
-    
+
     @Path("/{oid}/leido")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public ProcesoRendicion marcarComoLeido(@PathParam("oid") String oid){
+    public ProcesoRendicion marcarComoLeido(@PathParam("oid") String oid) {
 	notificacionProcesoService.marcarComoLeido(oid);
 	return null;
     }
 
     private void sendMail(NotificacionProceso notificacion) {
-	String destinatarios = ConfigProvider.getConfig().getValue("destinatarios-notificacion", String.class);
+	String destinatarios = new Parametros().getDestinatarios();
 
 	String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
-	content += "<h2>Informe de proceso demorado</h2>";
+	content += "<h2>Informe de proceso retrasado</h2>";
 	content += "<br />";
 	content += "<p>Un proceso de Rendiciones ha tomado en ejecución más tiempo del configurado como permitido, por lo que se ha generado esta alerta para informar del estado en ejecución.</p>";
 	content += "<h3>Detalle:</h3>";
@@ -130,11 +130,22 @@ public class ProcesoRendicionResource {
 	content += "<p>Este es un mensaje generado automáticamente. Por favor no responda este correo.</p>";
 	content += "</body></html>";
 
-	mailer.send(Mail.withText(
-		destinatarios,
-		"¡ATENCIÓN! - RETRASO EN PROCESO RENDICIÓN #" + notificacion.getIdProceso() + " EPS " + notificacion.getProcesosRendicion().get(0).getNombreEps(),
-		content
-	));
+	List<String> destinos = new ArrayList();
+	String[] tos = destinatarios.split(",");
+
+	if (tos.length > 0) {
+	    Mail correo = new Mail();
+	    correo.setFrom("reporte@reporte.unired.cl");
+	    correo.setSubject("¡ATENCIÓN! - RETRASO EN PROCESO RENDICIÓN #" + notificacion.getIdProceso() + " EPS " + notificacion.getProcesosRendicion().get(0).getNombreEps());
+	    correo.setText(content);
+
+	    for (String dest : tos) {
+		destinos.add(dest);
+	    }
+	    correo.setTo(destinos);
+	    mailer.send(correo);
+	}
+
     }
 
 }
