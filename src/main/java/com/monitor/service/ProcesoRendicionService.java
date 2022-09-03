@@ -87,6 +87,7 @@ public class ProcesoRendicionService {
 		.find(Filters.eq("idProceso", idProceso))
 		.sort(Sorts.ascending("fechaHoraConsulta"))
 		.iterator();
+	int cont = 0;
 	try {
 	    while (documentosProceso.hasNext()) {
 		Document rendicionDocument = documentosProceso.next();
@@ -109,6 +110,8 @@ public class ProcesoRendicionService {
 		proceso.setFechaHoraConsulta(rendicionDocument.getDate("fechaHoraConsulta").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 		
 		procesosRendicion.add(proceso);
+		cont ++;
+		System.out.println("Vuelta: " + cont);
 	    }
 	    return procesosRendicion;
 	} catch (Exception ex) {

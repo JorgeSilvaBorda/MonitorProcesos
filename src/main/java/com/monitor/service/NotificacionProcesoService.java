@@ -31,7 +31,7 @@ public class NotificacionProcesoService {
 	documentNotificacion = notificacionClassToDocument(notificacion);
 	getCollection().insertOne(documentNotificacion);
 	NotificacionProceso documentoInsertado = notificacion;
-	documentoInsertado.setId(documentNotificacion.getObjectId("_id"));
+	documentoInsertado.set_id(documentNotificacion.getObjectId("_id"));
 	return documentoInsertado;
     }
 
@@ -41,7 +41,7 @@ public class NotificacionProcesoService {
 	    return null;
 	}
 	NotificacionProceso notificacion = new NotificacionProceso();
-	notificacion.setId(documentNotificacion.getObjectId("_id"));
+	notificacion.set_id(documentNotificacion.getObjectId("_id"));
 	notificacion.setIdProceso(documentNotificacion.getInteger("idProceso"));
 	notificacion.setLeido(documentNotificacion.getBoolean("leido"));
 	//no se está cargando el detalle de los procesos leídos para la notificación.
@@ -65,24 +65,28 @@ public class NotificacionProcesoService {
 
     public List<NotificacionProceso> getNotificacionesNoLeidas() {
 	MongoCursor<Document> notificacionesProceso = getCollection().find(Filters.eq("leido", false)).iterator();
+	
 	List<NotificacionProceso> notificaciones = new ArrayList();
 	boolean alMenosUna = false;
 	try {
 	    while (notificacionesProceso.hasNext()) {
 		Document notificacionProceso = notificacionesProceso.next();
 		NotificacionProceso not = notificacionDocumentToClass(notificacionProceso);
+		notificaciones.add(not);
 	    }
 	} catch (Exception ex) {
 	    System.out.println("No se pudo obtener el listado de notificaciones sin leer.");
+	    ex.printStackTrace();
 	    System.out.println(ex);
 	}
+	System.out.println(notificaciones.size());
 	return notificaciones;
     }
 
     //Conversores de clase y documento-------------------------------------------------------------------
     private NotificacionProceso notificacionDocumentToClass(Document docNotificacion) {
 	NotificacionProceso notificacion = new NotificacionProceso();
-	notificacion.setId(docNotificacion.getObjectId("_id"));
+	notificacion.set_id(docNotificacion.getObjectId("_id"));
 	notificacion.setIdProceso(docNotificacion.getInteger("idProceso"));
 	notificacion.setLeido(docNotificacion.getBoolean("leido"));
 	notificacion.setTiempoPermitido(docNotificacion.getInteger("tiempoPermitido"));

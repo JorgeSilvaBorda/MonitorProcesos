@@ -1,9 +1,12 @@
 package com.monitor.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.monitor.util.ObjectIdSerializer;
 import java.util.List;
 import org.bson.types.ObjectId;
 
 public class NotificacionProceso{
+    @JsonSerialize(using = ObjectIdSerializer.class)
     private ObjectId _id;
     private Integer idProceso;
     private boolean leido;
@@ -21,11 +24,11 @@ public class NotificacionProceso{
 	this.procesosRendicion = procesosRendicion;
     }
 
-    public ObjectId getId() {
+    public ObjectId get_id() {
 	return _id;
     }
 
-    public void setId(ObjectId _id) {
+    public void set_id(ObjectId _id) {
 	this._id = _id;
     }
 

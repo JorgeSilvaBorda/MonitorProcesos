@@ -54,9 +54,11 @@ public class ProcesoRendicionResource {
 
 	//En caso de que exista un proceso en ejecución:
 	if (procesoActual != null) {
+	    System.out.println("Hay proceso en ejecución");
 	    //antes de proceder, se debe validar si ya existe una alerta generada para el proceso
 	    NotificacionProceso notificacion = notificacionProcesoService.getNotificacionProcesoByIdProceso(procesoActual.getIdProceso());
 	    if (notificacion != null) {
+		System.out.println("Ya existe una alerta para el proceso");
 		return new ProcesoRendicion();
 	    }
 	    //Se debe guardar el que se está leyendo para que aparezca en la lista de más abajo
@@ -67,6 +69,7 @@ public class ProcesoRendicionResource {
 
 	    //Si en el listado hay al menos un proceso registrado:
 	    if (procesosRendicion.size() > 0) {
+		System.out.println("Cantidad de muestras: " + procesosRendicion.size());
 		//3.- Obtener diferencia de tiempo de los procesos registrados.
 		long minutos = 0;
 		ProcesoRendicion proc = procesosRendicion.get(0);
@@ -76,8 +79,10 @@ public class ProcesoRendicionResource {
 		    proc = procesosRendicion.get(i);
 		}
 		LocalDateTime fechaHoraUltimaLectura = procesoActual.getFechaHoraConsulta();
-
+		
+		System.out.println("La cantidad de minutos en ejecución: " + minutos);
 		if (minutos > new Parametros().getMaxMinutosEspera()) {
+		    System.out.println("Se guarda alerta");
 		    //Guardar mensaje de alerta
 		    NotificacionProceso notificacionProceso = new NotificacionProceso();
 		    notificacionProceso.setIdProceso(procesoActual.getIdProceso());
