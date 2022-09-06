@@ -17,9 +17,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.jboss.logging.Logger;
+
 
 @Path("/procesoprogramado")
 public class ProcesoRendicionResource {
+    
+    private static final Logger LOG = Logger.getLogger(ProcesoRendicionResource.class);
 
     @Inject
     ProcesoRendicionMapper mapper;
@@ -48,17 +52,18 @@ public class ProcesoRendicionResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ProcesoRendicion buscarEnEjecucion() {
-
+	LOG.info("Entra a buscar en ejeución");
+	
 	//1.- Buscar proceso en ejecución (EstadoEjecución = 26)
 	ProcesoRendicion procesoActual = mapper.buscarEnEjecucion();
-
+	
 	//En caso de que exista un proceso en ejecución:
 	if (procesoActual != null) {
-	    System.out.println("Hay proceso en ejecución");
+	    LOG.info("Hay proceso en ejecución. ID Proceso: " + procesoActual.getIdProceso());
 	    //antes de proceder, se debe validar si ya existe una alerta generada para el proceso
 	    NotificacionProceso notificacion = notificacionProcesoService.getNotificacionProcesoByIdProceso(procesoActual.getIdProceso());
 	    if (notificacion != null) {
-		System.out.println("Ya existe una alerta para el proceso");
+		LOG.info("Ya existe una alerta para el proceso");
 		return new ProcesoRendicion();
 	    }
 	    //Se debe guardar el que se está leyendo para que aparezca en la lista de más abajo
@@ -69,7 +74,7 @@ public class ProcesoRendicionResource {
 
 	    //Si en el listado hay al menos un proceso registrado:
 	    if (procesosRendicion.size() > 0) {
-		System.out.println("Cantidad de muestras: " + procesosRendicion.size());
+		LOG.info("Cantidad de muestras para el proceso en ejecución: " + procesosRendicion.size());
 		//3.- Obtener diferencia de tiempo de los procesos registrados.
 		long minutos = 0;
 		ProcesoRendicion proc = procesosRendicion.get(0);
@@ -80,9 +85,9 @@ public class ProcesoRendicionResource {
 		}
 		LocalDateTime fechaHoraUltimaLectura = procesoActual.getFechaHoraConsulta();
 		
-		System.out.println("La cantidad de minutos en ejecución: " + minutos);
-		if (minutos > new Parametros().getMaxMinutosEspera()) {
-		    System.out.println("Se guarda alerta");
+		LOG.info("La cantidad de minutos en ejecución: " + minutos);
+		if (minutos >= new Parametros().getMaxMinutosEspera()) {
+		    LOG.info("Se guarda alerta");
 		    //Guardar mensaje de alerta
 		    NotificacionProceso notificacionProceso = new NotificacionProceso();
 		    notificacionProceso.setIdProceso(procesoActual.getIdProceso());
@@ -125,8 +130,11 @@ public class ProcesoRendicionResource {
     }
 
     private void sendMail(NotificacionProceso notificacion) {
+	LOG.info("Se ingresa a enviar mail");
 	String destinatarios = new Parametros().getDestinatarios();
-
+	LOG.info("Los destinatarios de Mail son los siguientes:");
+	LOG.info(destinatarios);
+	
 	String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 	content += "<h2>Informe de proceso retrasado</h2>";
 	content += "<br />";
