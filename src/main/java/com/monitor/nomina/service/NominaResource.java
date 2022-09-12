@@ -110,7 +110,7 @@ public class NominaResource {
 
 	    //Envía Mail-----------------------------------------------------------------------------
 	    
-	    //sendMail(nominasRegistrar);
+	    sendMail(nominasRegistrar);
 	    
 	    return notificacionesResponse;
 	}
