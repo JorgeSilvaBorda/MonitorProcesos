@@ -41,15 +41,15 @@ public class NominaResource {
     @Path("/estados")
     @Produces(MediaType.APPLICATION_JSON)
     public List<NotificacionNomina> getEstadosNominas() {
-	
+
 	//Traer los procesos de nóminas programados para la fecha
 	List<ProcesoNomina> nominas = mapper.getEstadosNominas();
 	LOG.info("Cantidad de nóminas con problemas desde SQL Server: " + nominas.size());
-	
+
 	//Obtener la fecha desde el SQL Server, porque la del servidor no está correcta
 	FechaSistema fechaSistema = fechaSistemaMapper.getFechaSistema();
 	LOG.info("La fecha del sistema es: " + fechaSistema.getFechaHora());
-	
+
 	//Traer los procesos de nóminas que ya se guardaron en la base de datos mongo para comparar
 	List<ProcesoNomina> nominasRegistradasError = notificacionService.getProcesosNominaRegistradosError(fechaSistema.getFecha());
 	LOG.info("Para la fecha seleccionada, hay " + nominasRegistradasError.size() + " Nominas registradas con error en base local (MongoDB).");
@@ -98,7 +98,7 @@ public class NominaResource {
 		npn.setMinutos(pn.getMinutos());
 		npn.setMinutosALaHora(pn.getMinutosALaHora());
 		npn.setNomEmpresa(pn.getNomEmpresa());
-		
+
 		notificacionesResponse.add(npn);
 		Document docNotificar = NotificacionNomina.toDocument(npn);
 		documentosNotificar.add(docNotificar);
@@ -109,9 +109,8 @@ public class NominaResource {
 	    notificacionService.insNotificacionesProcesoNomina(documentosNotificar);
 
 	    //Envía Mail-----------------------------------------------------------------------------
-	    
 	    sendMail(nominasRegistrar);
-	    
+
 	    return notificacionesResponse;
 	}
 
@@ -132,33 +131,43 @@ public class NominaResource {
 	LOG.info("Los destinatarios de Mail son los siguientes:");
 	LOG.info(destinatarios);
 
-	String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
+	String content = "<!doctype html>\n";
+	content += "<html lang=\"en\">";
+	content += "<body style=\"font-family: Arial, sans-serif;\" >";
 	content += "<h2>Informe de problemas en proceso de Nóminas</h2>";
 	content += "<br />";
 	content += "<p>Existen procesos de Nóminas que no han finalizado dentro de su rango horario o han finalizado con estado error, por lo que se ha generado esta alerta para informar del estado en ejecución.</p>";
 	content += "<h3>Detalle:</h3>";
-	content += "<table style='border-width: 1px; border-collapse: collapse; font-size:12px;'><thead>";
+	content += "<table class=\"table\" style=\"border: 1px solid black; border-collapse: collapse; font-size:12px;\" ><thead>";
 	content += "<tr>";
-	content += "<th style='font-weight:bold;'>ID Empresa</th>";
-	content += "<th style='font-weight:bold;'>Cod Empresa</th>";
-	content += "<th style='font-weight:bold;'>Empresa</th>";
-	content += "<th style='font-weight:bold;'>Hora Ini</th>";
-	content += "<th style='font-weight:bold;'>Hora Fin</th>";
-	content += "<th style='font-weight:bold;'>Hora Alerta</th>";
-	content += "<th style='font-weight:bold;'>Tipo Error</th>";
-	content += "<th style='font-weight:bold;'>Estado</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">ID Empresa</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">Cod Empresa</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">Empresa</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">Hora Ini</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">Hora Fin</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">Hora Alerta</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">Tipo Error</th>";
+	content += "<th style=\"border: 1px solid black; font-weight:bold;\">Estado</th>";
 	content += "</tr>";
 	content += "</thead><tbody>";
 	for (ProcesoNomina notificacion : notificaciones) {
 	    content += "<tr>";
-	    content += "<td>" + notificacion.getIdEmpresa() + "</td>";
-	    content += "<td>" + notificacion.getCodEmpresa() + "</td>";
-	    content += "<td>" + notificacion.getNomEmpresa() + "</td>";
-	    content += "<td>" + notificacion.getHoraIni() + "</td>";
-	    content += "<td>" + notificacion.getHoraFin() + "</td>";
-	    content += "<td>" + notificacion.getHoraActual() + "</td>";
-	    content += "<td>" + notificacion.getIdEstado() == null ? "Sin Finalizar" : "Terminado con Error" + "</td>";
-	    content += "<td>" + notificacion.getIdEstado() == null ? "" : notificacion.getEstado() + "</td>";
+	    content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" >" + notificacion.getIdEmpresa() + "</td>";
+	    content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" >" + notificacion.getCodEmpresa() + "</td>";
+	    content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" >" + notificacion.getNomEmpresa() + "</td>";
+	    content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" >" + notificacion.getHoraIni() + "</td>";
+	    content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" >" + notificacion.getHoraFin() + "</td>";
+	    content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" >" + notificacion.getHoraActual() + "</td>";
+
+	    if (notificacion.getIdEstado() == null) {
+		content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" >No ha finalizado</td>";
+		content += "<td style=\"border: 1px solid black; border-collapse: collapse;\" ></td>";
+	    } else {
+
+		content += "<td style=\"border: 1px solid black; border-collapse: collapse;\"  >Terminado con Error</td>";
+		content += "<td style=\"border: 1px solid black; border-collapse: collapse;\"  >" + notificacion.getEstado() + "</td>";
+	    }
+
 	    content += "</tr>";
 	}
 
