@@ -1,4 +1,4 @@
-package com.monitor.service;
+package com.monitor.rendicion.service;
 
 import com.monitor.model.NotificacionProceso;
 import com.monitor.model.ProcesoRendicion;
@@ -136,7 +136,7 @@ public class ProcesoRendicionResource {
 	LOG.info(destinatarios);
 	
 	String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
-	content += "<h2>Informe de proceso retrasado</h2>";
+	content += "<h2>Informe de proceso de Rendiciones retrasado</h2>";
 	content += "<br />";
 	content += "<p>Un proceso de Rendiciones ha tomado en ejecución más tiempo del configurado como permitido, por lo que se ha generado esta alerta para informar del estado en ejecución.</p>";
 	content += "<h3>Detalle:</h3>";

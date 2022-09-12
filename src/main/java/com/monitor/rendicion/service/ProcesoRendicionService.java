@@ -1,4 +1,4 @@
-package com.monitor.service;
+package com.monitor.rendicion.service;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
