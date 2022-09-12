@@ -16,7 +16,7 @@ import org.bson.Document;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 @ApplicationScoped
-public class ProcesoRendicionService {
+public class RendicionService {
 
     private final String DATABASE = ConfigProvider.getConfig().getValue("application.database", String.class);
     private final String COLLECTION = ConfigProvider.getConfig().getValue("application.rendiciones.collection", String.class);

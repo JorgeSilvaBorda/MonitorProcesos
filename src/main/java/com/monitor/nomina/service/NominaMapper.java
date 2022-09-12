@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 @MapperDataSource("nominas")
-public interface ProcesoNominaMapper {
+public interface NominaMapper {
 
     @Select("SELECT \n"
 	    + "	a.id_empresa idEmpresa,\n"

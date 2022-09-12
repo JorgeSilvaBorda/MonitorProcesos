@@ -9,7 +9,7 @@ import java.time.ZoneId;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-public class NotificacionProcesoNomina {
+public class NotificacionNomina {
 
     @JsonSerialize(using = ObjectIdSerializer.class)
     private ObjectId _id;
@@ -29,10 +29,10 @@ public class NotificacionProcesoNomina {
     private LocalDateTime fechaHoraCarga;
     private boolean leido;
 
-    public NotificacionProcesoNomina() {
+    public NotificacionNomina() {
     }
 
-    public NotificacionProcesoNomina(ObjectId _id, String idEmpresa, String codEmpresa, String nomEmpresa, String horaIni, String horaFin, String horaActual, Integer minutosALaHora, LocalDateTime fechaProceso, LocalDateTime fechaTermino, Integer minutos, Integer idEstado, String estado, LocalDate fechaCarga, LocalDateTime fechaHoraCarga, boolean leido) {
+    public NotificacionNomina(ObjectId _id, String idEmpresa, String codEmpresa, String nomEmpresa, String horaIni, String horaFin, String horaActual, Integer minutosALaHora, LocalDateTime fechaProceso, LocalDateTime fechaTermino, Integer minutos, Integer idEstado, String estado, LocalDate fechaCarga, LocalDateTime fechaHoraCarga, boolean leido) {
 	this._id = _id;
 	this.idEmpresa = idEmpresa;
 	this.codEmpresa = codEmpresa;
@@ -180,7 +180,7 @@ public class NotificacionProcesoNomina {
     }
 
     @JsonIgnore
-    public static Document toDocument(NotificacionProcesoNomina notificacion){
+    public static Document toDocument(NotificacionNomina notificacion){
 	Document document = new Document();
 	document.append("_id", notificacion.get_id());
 	document.append("idEmpresa", notificacion.getIdEmpresa());
@@ -203,8 +203,8 @@ public class NotificacionProcesoNomina {
     }
     
     @JsonIgnore
-    public static NotificacionProcesoNomina fromDocument(Document document){
-	NotificacionProcesoNomina notificacion = new NotificacionProcesoNomina();
+    public static NotificacionNomina fromDocument(Document document){
+	NotificacionNomina notificacion = new NotificacionNomina();
 	notificacion.set_id(document.getObjectId("_id"));
 	notificacion.setIdEmpresa(document.getString("idEmpresa"));
 	notificacion.setCodEmpresa(document.getString("codEmpresa"));

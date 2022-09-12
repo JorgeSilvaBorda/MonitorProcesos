@@ -5,7 +5,7 @@ import com.monitor.util.ObjectIdSerializer;
 import java.util.List;
 import org.bson.types.ObjectId;
 
-public class NotificacionProceso{
+public class NotificacionRendicion{
     @JsonSerialize(using = ObjectIdSerializer.class)
     private ObjectId _id;
     private Integer idProceso;
@@ -13,10 +13,10 @@ public class NotificacionProceso{
     private Integer tiempoPermitido;
     private List<ProcesoRendicion> procesosRendicion;
 
-    public NotificacionProceso() {
+    public NotificacionRendicion() {
     }
 
-    public NotificacionProceso(ObjectId _id, Integer idProceso, boolean leido, Integer tiempoPermitido, List<ProcesoRendicion> procesosRendicion) {
+    public NotificacionRendicion(ObjectId _id, Integer idProceso, boolean leido, Integer tiempoPermitido, List<ProcesoRendicion> procesosRendicion) {
 	this._id = _id;
 	this.idProceso = idProceso;
 	this.leido = leido;

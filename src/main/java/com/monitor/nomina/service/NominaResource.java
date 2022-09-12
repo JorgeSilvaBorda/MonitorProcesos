@@ -1,7 +1,7 @@
 package com.monitor.nomina.service;
 
 import com.monitor.model.FechaSistema;
-import com.monitor.model.NotificacionProcesoNomina;
+import com.monitor.model.NotificacionNomina;
 import com.monitor.model.ProcesoNomina;
 import com.monitor.util.FechaSistemaMapper;
 import com.monitor.util.Parametros;
@@ -21,12 +21,12 @@ import org.bson.types.ObjectId;
 import org.jboss.logging.Logger;
 
 @Path("/procesonominas")
-public class ProcesoNominaResource {
+public class NominaResource {
 
-    private static final Logger LOG = Logger.getLogger(ProcesoNominaResource.class);
+    private static final Logger LOG = Logger.getLogger(NominaResource.class);
 
     @Inject
-    ProcesoNominaMapper mapper;
+    NominaMapper mapper;
 
     @Inject
     NotificacionNominaService notificacionService;
@@ -40,19 +40,19 @@ public class ProcesoNominaResource {
     @GET
     @Path("/estados")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<NotificacionProcesoNomina> getEstadosNominas() {
+    public List<NotificacionNomina> getEstadosNominas() {
 	
 	//Traer los procesos de nóminas programados para la fecha
 	List<ProcesoNomina> nominas = mapper.getEstadosNominas();
-	System.out.println("Cantidad de nóminas con problemas desde SQL Server: " + nominas.size());
+	LOG.info("Cantidad de nóminas con problemas desde SQL Server: " + nominas.size());
 	
 	//Obtener la fecha desde el SQL Server, porque la del servidor no está correcta
 	FechaSistema fechaSistema = fechaSistemaMapper.getFechaSistema();
-	System.out.println("La fecha del sistema es: " + fechaSistema.getFechaHora());
+	LOG.info("La fecha del sistema es: " + fechaSistema.getFechaHora());
 	
 	//Traer los procesos de nóminas que ya se guardaron en la base de datos mongo para comparar
 	List<ProcesoNomina> nominasRegistradasError = notificacionService.getProcesosNominaRegistradosError(fechaSistema.getFecha());
-	System.out.println("Para la fecha seleccionada, hay " + nominasRegistradasError.size() + " Nominas registradas con error en base local.");
+	LOG.info("Para la fecha seleccionada, hay " + nominasRegistradasError.size() + " Nominas registradas con error en base local (MongoDB).");
 
 	//Comparar los que se traen del SQL. Si no figura en mongo, guardarlo y crear alerta
 	List<ProcesoNomina> nominasRegistrar = new ArrayList();
@@ -76,12 +76,12 @@ public class ProcesoNominaResource {
 
 	//En caso de que existan nuevas nóminas con error que registrar--------------------
 	if (nominasRegistrar.size() > 0) {
-	    
+	    LOG.info("Hay nóminas que registrar en la base de notificaciones (MongoDB)");
 	    //Convertir las clases a documentos para pasarlo al método siguiente
 	    List<Document> documentosNotificar = new ArrayList();
-	    List<NotificacionProcesoNomina> notificacionesResponse = new ArrayList(); //Esta lista es solo para la salida del api
+	    List<NotificacionNomina> notificacionesResponse = new ArrayList(); //Esta lista es solo para la salida del api
 	    for (ProcesoNomina pn : nominasRegistrar) {
-		NotificacionProcesoNomina npn = new NotificacionProcesoNomina();
+		NotificacionNomina npn = new NotificacionNomina();
 		npn.set_id(new ObjectId());
 		npn.setCodEmpresa(pn.getCodEmpresa());
 		npn.setEstado(pn.getEstado());
@@ -100,15 +100,16 @@ public class ProcesoNominaResource {
 		npn.setNomEmpresa(pn.getNomEmpresa());
 		
 		notificacionesResponse.add(npn);
-		Document docNotificar = NotificacionProcesoNomina.toDocument(npn);
+		Document docNotificar = NotificacionNomina.toDocument(npn);
 		documentosNotificar.add(docNotificar);
 	    }
 
 	    //Insertar el listado de nominas a registrar error.
-	    System.out.println("Cantidad de documentos a guardar: " + documentosNotificar.size());
+	    LOG.info("Cantidad de documentos a guardar: " + documentosNotificar.size());
 	    notificacionService.insNotificacionesProcesoNomina(documentosNotificar);
 
 	    //Envía Mail-----------------------------------------------------------------------------
+	    
 	    //sendMail(nominasRegistrar);
 	    
 	    return notificacionesResponse;

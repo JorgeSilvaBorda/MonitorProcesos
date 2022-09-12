@@ -6,6 +6,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
 import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.Updates;
+import com.monitor.model.NotificacionNomina;
 import com.monitor.model.ProcesoNomina;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -42,6 +43,23 @@ public class NotificacionNominaService {
 	    return procesosNomina;
 	}catch (Exception ex) {
 	    System.out.println("No se pudo obtener el listado de procesos nómina para la fecha de carga solicitada");
+	    System.out.println(ex);
+	    return new ArrayList();
+	}
+    }
+    
+    public List<NotificacionNomina> getProcesosNominaRegistradosNoLeidos(){
+	List<NotificacionNomina> notificaciones = new ArrayList();
+	MongoCursor<Document> documentosNomina = getCollection()
+		.find(Filters.eq("leido", false))
+		.iterator();
+	try{
+	    while(documentosNomina.hasNext()){
+		notificaciones.add(NotificacionNomina.fromDocument(documentosNomina.next()));
+	    }
+	    return notificaciones;
+	}catch (Exception ex) {
+	    System.out.println("No se pudo obtener el listado de notificaciones nómina no leídas");
 	    System.out.println(ex);
 	    return new ArrayList();
 	}
