@@ -57,6 +57,7 @@ public class NotificacionNominaService {
 	    while(documentosNomina.hasNext()){
 		notificaciones.add(NotificacionNomina.fromDocument(documentosNomina.next()));
 	    }
+	    System.out.println("Hay " + notificaciones.size() + " Notificaciones de Nominas no leídas");
 	    return notificaciones;
 	}catch (Exception ex) {
 	    System.out.println("No se pudo obtener el listado de notificaciones nómina no leídas");

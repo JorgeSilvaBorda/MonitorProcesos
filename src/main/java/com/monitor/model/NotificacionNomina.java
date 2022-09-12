@@ -180,7 +180,7 @@ public class NotificacionNomina {
     }
 
     @JsonIgnore
-    public static Document toDocument(NotificacionNomina notificacion){
+    public static Document toDocument(NotificacionNomina notificacion) {
 	Document document = new Document();
 	document.append("_id", notificacion.get_id());
 	document.append("idEmpresa", notificacion.getIdEmpresa());
@@ -198,12 +198,12 @@ public class NotificacionNomina {
 	document.append("fechaCarga", notificacion.getFechaCarga());
 	document.append("fechaHoraCarga", notificacion.getFechaHoraCarga());
 	document.append("leido", notificacion.isLeido());
-	
+
 	return document;
     }
-    
+
     @JsonIgnore
-    public static NotificacionNomina fromDocument(Document document){
+    public static NotificacionNomina fromDocument(Document document) {
 	NotificacionNomina notificacion = new NotificacionNomina();
 	notificacion.set_id(document.getObjectId("_id"));
 	notificacion.setIdEmpresa(document.getString("idEmpresa"));
@@ -213,15 +213,17 @@ public class NotificacionNomina {
 	notificacion.setHoraFin(document.getString("horaFin"));
 	notificacion.setHoraActual(document.getString("horaActual"));
 	notificacion.setMinutosALaHora(document.getInteger("minutosALaHora"));
-	notificacion.setFechaProceso(document.getDate("fechaProceso").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-	notificacion.setFechaProceso(document.getDate("fechaTermino").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-	notificacion.setMinutos(document.getInteger("minutos"));
-	notificacion.setIdEstado(document.getInteger("idEstado"));
+	if (document.getInteger("idEstado") != null) {
+	    notificacion.setFechaProceso(document.getDate("fechaProceso").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+	    notificacion.setFechaProceso(document.getDate("fechaTermino").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+	    notificacion.setMinutos(document.getInteger("minutos"));
+	    notificacion.setIdEstado(document.getInteger("idEstado"));
+	}
+
 	notificacion.setFechaCarga(document.getDate("fechaCarga").toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
 	notificacion.setFechaHoraCarga(document.getDate("fechaHoraCarga").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-	
+
 	return notificacion;
     }
-    
 
 }
