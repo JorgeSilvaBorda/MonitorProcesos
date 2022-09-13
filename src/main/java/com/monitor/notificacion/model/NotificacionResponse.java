@@ -5,23 +5,23 @@ import com.monitor.model.NotificacionNomina;
 import java.util.List;
 
 public class NotificacionResponse {
-    private List<NotificacionRendicion> notificacionesRendicion;
+    private List<NotificacionRendicion> notificacionesRendiciones;
     private List<NotificacionNomina> notificacionesNominas;
-
-    public NotificacionResponse(List<NotificacionRendicion> notificacionesRendicion, List<NotificacionNomina> notificacionesNominas) {
-	this.notificacionesRendicion = notificacionesRendicion;
-	this.notificacionesNominas = notificacionesNominas;
-    }
 
     public NotificacionResponse() {
     }
 
-    public List<NotificacionRendicion> getNotificacionesRendicion() {
-	return notificacionesRendicion;
+    public NotificacionResponse(List<NotificacionRendicion> notificacionesRendiciones, List<NotificacionNomina> notificacionesNominas) {
+	this.notificacionesRendiciones = notificacionesRendiciones;
+	this.notificacionesNominas = notificacionesNominas;
     }
 
-    public void setNotificacionesRendicion(List<NotificacionRendicion> notificacionesRendicion) {
-	this.notificacionesRendicion = notificacionesRendicion;
+    public List<NotificacionRendicion> getNotificacionesRendiciones() {
+	return notificacionesRendiciones;
+    }
+
+    public void setNotificacionesRendiciones(List<NotificacionRendicion> notificacionesRendiciones) {
+	this.notificacionesRendiciones = notificacionesRendiciones;
     }
 
     public List<NotificacionNomina> getNotificacionesNominas() {
@@ -31,6 +31,7 @@ public class NotificacionResponse {
     public void setNotificacionesNominas(List<NotificacionNomina> notificacionesNominas) {
 	this.notificacionesNominas = notificacionesNominas;
     }
+
     
     
 }

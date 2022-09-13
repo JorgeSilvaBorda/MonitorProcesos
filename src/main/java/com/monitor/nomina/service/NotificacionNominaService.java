@@ -62,6 +62,7 @@ public class NotificacionNominaService {
 	}catch (Exception ex) {
 	    System.out.println("No se pudo obtener el listado de notificaciones nómina no leídas");
 	    System.out.println(ex);
+	    ex.printStackTrace();
 	    return new ArrayList();
 	}
     }

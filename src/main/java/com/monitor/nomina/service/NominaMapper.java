@@ -23,6 +23,7 @@ public interface NominaMapper {
 	    + "	datediff(MINUTE, b.fecha_proceso, b.fecha_termino) minutos,\n"
 	    + "	b.id_estado idEstado,\n"
 	    + "	c.glosa_estado estado,\n"
+	    + "	convert(date, getdate()) fechaCarga,\n"
 	    + "	getDate() fechaHoraCarga\n"
 	    + "FROM 	\n"
 	    + "	tbl_EmpUnimarc a LEFT JOIN tbl_LogUnimarc b \n"

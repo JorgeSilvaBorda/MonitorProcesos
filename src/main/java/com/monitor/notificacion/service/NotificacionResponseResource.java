@@ -42,7 +42,7 @@ public class NotificacionResponseResource {
 	
 	NotificacionResponse response = new NotificacionResponse();
 	response.setNotificacionesNominas(nominas);
-	response.setNotificacionesRendicion(rendiciones);
+	response.setNotificacionesRendiciones(rendiciones);
 	
 	return response;
 	
