@@ -1,11 +1,13 @@
-package com.monitor.service;
+package com.monitor.rendicion.service;
 
 import com.monitor.model.ProcesoRendicion;
+import io.quarkiverse.mybatis.runtime.meta.MapperDataSource;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
 @Mapper
-public interface ProcesoRendicionMapper {
+@MapperDataSource("rendiciones")
+public interface RendicionMapper {
 
     @Select("SELECT\n"
 	    + "	a.IdPRoceso idProceso,\n"

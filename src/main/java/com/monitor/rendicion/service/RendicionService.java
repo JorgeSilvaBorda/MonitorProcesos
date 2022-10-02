@@ -1,4 +1,4 @@
-package com.monitor.service;
+package com.monitor.rendicion.service;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -16,7 +16,7 @@ import org.bson.Document;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 @ApplicationScoped
-public class ProcesoRendicionService {
+public class RendicionService {
 
     private final String DATABASE = ConfigProvider.getConfig().getValue("application.database", String.class);
     private final String COLLECTION = ConfigProvider.getConfig().getValue("application.rendiciones.collection", String.class);

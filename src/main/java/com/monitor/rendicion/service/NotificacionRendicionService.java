@@ -1,4 +1,4 @@
-package com.monitor.service;
+package com.monitor.rendicion.service;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -6,7 +6,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
 import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.Updates;
-import com.monitor.model.NotificacionProceso;
+import com.monitor.model.NotificacionRendicion;
 import com.monitor.model.ProcesoRendicion;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import org.bson.types.ObjectId;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 @ApplicationScoped
-public class NotificacionProcesoService {
+public class NotificacionRendicionService {
 
     private final String DATABASE = ConfigProvider.getConfig().getValue("application.database", String.class);
     private final String COLLECTION = ConfigProvider.getConfig().getValue("application.notificaciones.collection", String.class);
@@ -26,21 +26,21 @@ public class NotificacionProcesoService {
     @Inject
     MongoClient mongoClient;
 
-    public NotificacionProceso postNotificacionProceso(NotificacionProceso notificacion) {
+    public NotificacionRendicion postNotificacionProceso(NotificacionRendicion notificacion) {
 	Document documentNotificacion = new Document();
 	documentNotificacion = notificacionClassToDocument(notificacion);
 	getCollection().insertOne(documentNotificacion);
-	NotificacionProceso documentoInsertado = notificacion;
+	NotificacionRendicion documentoInsertado = notificacion;
 	documentoInsertado.set_id(documentNotificacion.getObjectId("_id"));
 	return documentoInsertado;
     }
 
-    public NotificacionProceso getNotificacionProcesoByIdProceso(Integer idProceso) {
+    public NotificacionRendicion getNotificacionProcesoByIdProceso(Integer idProceso) {
 	Document documentNotificacion = (Document) getCollection().find(Filters.eq("idProceso", idProceso)).first();
 	if (documentNotificacion == null) {
 	    return null;
 	}
-	NotificacionProceso notificacion = new NotificacionProceso();
+	NotificacionRendicion notificacion = new NotificacionRendicion();
 	notificacion.set_id(documentNotificacion.getObjectId("_id"));
 	notificacion.setIdProceso(documentNotificacion.getInteger("idProceso"));
 	notificacion.setLeido(documentNotificacion.getBoolean("leido"));
@@ -63,15 +63,15 @@ public class NotificacionProcesoService {
 	}
     }
 
-    public List<NotificacionProceso> getNotificacionesNoLeidas() {
+    public List<NotificacionRendicion> getNotificacionesNoLeidas() {
 	MongoCursor<Document> notificacionesProceso = getCollection().find(Filters.eq("leido", false)).iterator();
 	
-	List<NotificacionProceso> notificaciones = new ArrayList();
+	List<NotificacionRendicion> notificaciones = new ArrayList();
 	boolean alMenosUna = false;
 	try {
 	    while (notificacionesProceso.hasNext()) {
 		Document notificacionProceso = notificacionesProceso.next();
-		NotificacionProceso not = notificacionDocumentToClass(notificacionProceso);
+		NotificacionRendicion not = notificacionDocumentToClass(notificacionProceso);
 		notificaciones.add(not);
 	    }
 	} catch (Exception ex) {
@@ -84,8 +84,8 @@ public class NotificacionProcesoService {
     }
 
     //Conversores de clase y documento-------------------------------------------------------------------
-    private NotificacionProceso notificacionDocumentToClass(Document docNotificacion) {
-	NotificacionProceso notificacion = new NotificacionProceso();
+    private NotificacionRendicion notificacionDocumentToClass(Document docNotificacion) {
+	NotificacionRendicion notificacion = new NotificacionRendicion();
 	notificacion.set_id(docNotificacion.getObjectId("_id"));
 	notificacion.setIdProceso(docNotificacion.getInteger("idProceso"));
 	notificacion.setLeido(docNotificacion.getBoolean("leido"));
@@ -120,7 +120,7 @@ public class NotificacionProcesoService {
 	return notificacion;
     }
 
-    private Document notificacionClassToDocument(NotificacionProceso notificacion) {
+    private Document notificacionClassToDocument(NotificacionRendicion notificacion) {
 	Document documentNotificacion = new Document();
 	documentNotificacion
 		.append("idProceso", notificacion.getIdProceso())

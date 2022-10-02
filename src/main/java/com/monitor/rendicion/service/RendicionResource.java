@@ -1,6 +1,6 @@
-package com.monitor.service;
+package com.monitor.rendicion.service;
 
-import com.monitor.model.NotificacionProceso;
+import com.monitor.model.NotificacionRendicion;
 import com.monitor.model.ProcesoRendicion;
 import com.monitor.util.Parametros;
 import io.quarkus.mailer.Mail;
@@ -17,16 +17,20 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.jboss.logging.Logger;
+
 
 @Path("/procesoprogramado")
-public class ProcesoRendicionResource {
+public class RendicionResource {
+    
+    private static final Logger LOG = Logger.getLogger(RendicionResource.class);
 
     @Inject
-    ProcesoRendicionMapper mapper;
+    RendicionMapper mapper;
     @Inject
-    ProcesoRendicionService procesoRendicionService;
+    RendicionService procesoRendicionService;
     @Inject
-    NotificacionProcesoService notificacionProcesoService;
+    NotificacionRendicionService notificacionProcesoService;
     @Inject
     Mailer mailer;
 
@@ -48,17 +52,18 @@ public class ProcesoRendicionResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ProcesoRendicion buscarEnEjecucion() {
-
+	LOG.info("Entra a buscar en ejeución");
+	
 	//1.- Buscar proceso en ejecución (EstadoEjecución = 26)
 	ProcesoRendicion procesoActual = mapper.buscarEnEjecucion();
-
+	
 	//En caso de que exista un proceso en ejecución:
 	if (procesoActual != null) {
-	    System.out.println("Hay proceso en ejecución");
+	    LOG.info("Hay proceso en ejecución. ID Proceso: " + procesoActual.getIdProceso());
 	    //antes de proceder, se debe validar si ya existe una alerta generada para el proceso
-	    NotificacionProceso notificacion = notificacionProcesoService.getNotificacionProcesoByIdProceso(procesoActual.getIdProceso());
+	    NotificacionRendicion notificacion = notificacionProcesoService.getNotificacionProcesoByIdProceso(procesoActual.getIdProceso());
 	    if (notificacion != null) {
-		System.out.println("Ya existe una alerta para el proceso");
+		LOG.info("Ya existe una alerta para el proceso");
 		return new ProcesoRendicion();
 	    }
 	    //Se debe guardar el que se está leyendo para que aparezca en la lista de más abajo
@@ -69,7 +74,7 @@ public class ProcesoRendicionResource {
 
 	    //Si en el listado hay al menos un proceso registrado:
 	    if (procesosRendicion.size() > 0) {
-		System.out.println("Cantidad de muestras: " + procesosRendicion.size());
+		LOG.info("Cantidad de muestras para el proceso en ejecución: " + procesosRendicion.size());
 		//3.- Obtener diferencia de tiempo de los procesos registrados.
 		long minutos = 0;
 		ProcesoRendicion proc = procesosRendicion.get(0);
@@ -80,11 +85,11 @@ public class ProcesoRendicionResource {
 		}
 		LocalDateTime fechaHoraUltimaLectura = procesoActual.getFechaHoraConsulta();
 		
-		System.out.println("La cantidad de minutos en ejecución: " + minutos);
-		if (minutos > new Parametros().getMaxMinutosEspera()) {
-		    System.out.println("Se guarda alerta");
+		LOG.info("La cantidad de minutos en ejecución: " + minutos);
+		if (minutos >= new Parametros().getMaxMinutosEspera()) {
+		    LOG.info("Se guarda alerta");
 		    //Guardar mensaje de alerta
-		    NotificacionProceso notificacionProceso = new NotificacionProceso();
+		    NotificacionRendicion notificacionProceso = new NotificacionRendicion();
 		    notificacionProceso.setIdProceso(procesoActual.getIdProceso());
 		    notificacionProceso.setLeido(false);
 		    notificacionProceso.setProcesosRendicion(procesosRendicion);
@@ -103,7 +108,7 @@ public class ProcesoRendicionResource {
     @Path("/notificacion/noleido")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<NotificacionProceso> getNoLeido() {
+    public List<NotificacionRendicion> getNoLeido() {
 	return notificacionProcesoService.getNotificacionesNoLeidas();
     }
 
@@ -124,11 +129,14 @@ public class ProcesoRendicionResource {
 	return null;
     }
 
-    private void sendMail(NotificacionProceso notificacion) {
+    private void sendMail(NotificacionRendicion notificacion) {
+	LOG.info("Se ingresa a enviar mail");
 	String destinatarios = new Parametros().getDestinatarios();
-
+	LOG.info("Los destinatarios de Mail son los siguientes:");
+	LOG.info(destinatarios);
+	
 	String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
-	content += "<h2>Informe de proceso retrasado</h2>";
+	content += "<h2>Informe de proceso de Rendiciones retrasado</h2>";
 	content += "<br />";
 	content += "<p>Un proceso de Rendiciones ha tomado en ejecución más tiempo del configurado como permitido, por lo que se ha generado esta alerta para informar del estado en ejecución.</p>";
 	content += "<h3>Detalle:</h3>";
