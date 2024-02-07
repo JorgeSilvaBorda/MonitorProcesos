@@ -1,6 +1,12 @@
 package com.monitor.notificacion.service;
 
+import com.monitor.conciliacion.service.ConciliacionResource;
+import com.monitor.conciliacion.service.ConciliacionService;
+import com.monitor.extract.service.ExtractResource;
+import com.monitor.extract.service.ExtractService;
 import com.monitor.model.GrupoIdes;
+import com.monitor.model.NotificacionConciliacion;
+import com.monitor.model.NotificacionExtract;
 import com.monitor.model.NotificacionNomina;
 import com.monitor.model.NotificacionRendicion;
 import com.monitor.nomina.service.NominaResource;
@@ -21,16 +27,23 @@ import javax.ws.rs.core.MediaType;
 public class NotificacionResponseResource {
     @Inject
     NotificacionRendicionService serviceRendicion;
-    
     @Inject
     RendicionResource resourceRendicion;
     
     @Inject
     NotificacionNominaService serviceNomina;
-    
     @Inject
     NominaResource resourceNomina;
     
+    @Inject
+    ConciliacionService serviceConciliacion;
+    @Inject
+    ConciliacionResource resourceConciliacion;
+    
+    @Inject
+    ExtractService serviceExtract;
+    @Inject
+    ExtractResource resourceExtract;
     
     @Path("/noleidas")
     @GET
@@ -39,10 +52,14 @@ public class NotificacionResponseResource {
 	
 	List<NotificacionRendicion> rendiciones = serviceRendicion.getNotificacionesNoLeidas();
 	List<NotificacionNomina> nominas = serviceNomina.getProcesosNominaRegistradosNoLeidos();
+	List<NotificacionConciliacion> conciliaciones = serviceConciliacion.getNotificacionesConciliacionNoLeidas();
+	List<NotificacionExtract> extracts = serviceExtract.getNotificacionesExtractNoLeidas();
 	
 	NotificacionResponse response = new NotificacionResponse();
 	response.setNotificacionesNominas(nominas);
 	response.setNotificacionesRendiciones(rendiciones);
+	response.setNotificacionesConciliacion(conciliaciones);
+	response.setNotificacionesExtract(extracts);
 	
 	return response;
 	
@@ -54,6 +71,8 @@ public class NotificacionResponseResource {
     public void buscarEstadosError(){
 	resourceRendicion.buscarEnEjecucion();
 	resourceNomina.getEstadosNominas();
+	resourceConciliacion.buscarConciliacionesProblemasHoy();
+	resourceExtract.buscarExtractProblemasHoy();
     }
     
     @Path("/marcarleido")
@@ -63,6 +82,8 @@ public class NotificacionResponseResource {
 	
 	serviceNomina.marcarVariosComoLeido(ides.getIdesNominas());
 	serviceRendicion.marcarVariosComoLeido(ides.getIdesRendiciones());
+	serviceConciliacion.marcarVariosComoLeido(ides.getIdesConciliacion());
+	serviceExtract.marcarVariosComoLeido(ides.getIdesExtract());
 	
     }
 }
