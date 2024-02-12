@@ -1,0 +1,22 @@
+FROM alpine:latest
+RUN apk add --no-cache java-cacerts openjdk17-jdk
+RUN apk update
+RUN apk upgrade
+RUN apk add bash
+RUN apk add bash-completion
+
+RUN mkdir /deployments
+RUN mkdir /monitor-procesos
+
+COPY parametros.properties /monitor-procesos
+COPY target/quarkus-app/lib /deployments/lib
+COPY target/quarkus-app/app /deployments/app
+COPY target/quarkus-app/quarkus /deployments/quarkus
+COPY target/quarkus-app/*.jar /deployments/
+COPY java.security /usr/lib/jvm/java-17-openjdk/conf/security/java.security
+
+ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+
+EXPOSE 8182
+
+CMD ["java", "-jar", "/deployments/quarkus-run.jar"]
