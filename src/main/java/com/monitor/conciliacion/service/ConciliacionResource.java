@@ -30,7 +30,7 @@ public class ConciliacionResource {
     @Path("/notificacion/noleido")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    List<NotificacionConciliacion> getNoLeido(){
+    public List<NotificacionConciliacion> getNoLeido(){
 	return service.getNotificacionesConciliacionNoLeidas();
     }
     

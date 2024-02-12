@@ -11,6 +11,8 @@ import com.monitor.model.ProcesoExtract;
 import com.monitor.util.Parametros;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +39,12 @@ public class ExtractService {
     Mailer mailer;
     
     public void buscarExtractProblemasHoy() {
+	LocalDateTime fechaActual = LocalDateTime.now();
+	String fechaRegistroNotificacion = fechaActual.toLocalDate().toString();
 	List<ProcesoExtract> extracts = mapper.getExtractHoy();
 	if (extracts.size() == 0) { //No existen extract generadas dentro del horario exigido. Notificar
 	    Document documentNotificacionExtract = new Document()
+		    .append("fechaNotificacion", fechaRegistroNotificacion)
 		    .append("tipoNotificacion", "extract-no-iniciado")
 		    .append("leido", false);
 	    getCollection().insertOne(documentNotificacionExtract);
@@ -48,7 +53,7 @@ public class ExtractService {
 	    String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 	    content += "<h2>Informe de proceso de Extract con problemas</h2>";
 	    content += "<br />";
-	    content += "<p>No se encontraron procesos de extract en el horario de su ejecución</p>";
+	    content += "<p>No se encontraron procesos de extract en el horario de su ejecución (01:20:00 - 01:25:59)</p>";
 	    content += "<ul>";
 	    content += "</ul>";
 	    content += "<br />";
@@ -64,6 +69,7 @@ public class ExtractService {
 	if (extracts.size() == 1) { //Existe solo una fila. Debería haber dos. Revisar para notificar
 	    ProcesoExtract extract = extracts.get(0);
 	    Document documentNotificacionExtract = new Document()
+		    .append("fechaNotificacion", fechaRegistroNotificacion)
 		    .append("descripcion", extract.getDescripcion())
 		    .append("fechaCreacion", extract.getFechaCreacion())
 		    .append("fechaHoraCreacion", extract.getFechaHoraCreacion())
@@ -75,6 +81,7 @@ public class ExtractService {
 		    .append("leido", false);
 	    if (extracts.get(0).getIdTipoLog() == 2) { //Extract inició, pero no ha finalizado
 		documentNotificacionExtract.append("tipoNotificacion", "extract-iniciado-no-finalizado");
+		getCollection().insertOne(documentNotificacionExtract);
 		//Preparar contenido del Mail
 		String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 		content += "<h2>Informe de proceso de Extract con problemas</h2>";
@@ -97,6 +104,7 @@ public class ExtractService {
 	    }
 	    if (extracts.get(0).getIdTipoLog() == 4) { //Extract finalizado, pero sin inicio
 		documentNotificacionExtract.append("tipoNotificacion", "extract-finalizado-error-sin-inicio");
+		getCollection().insertOne(documentNotificacionExtract);
 		//Preparar contenido del Mail
 		String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 		content += "<h2>Informe de proceso de Extract con problemas</h2>";
@@ -119,6 +127,7 @@ public class ExtractService {
 	    }
 	    if (extracts.get(0).getIdTipoLog() == 6) {
 		documentNotificacionExtract.append("tipoNotificacion", "extract-finalizado-sin-inicio");
+		getCollection().insertOne(documentNotificacionExtract);
 		//Preparar contenido del Mail
 		String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 		content += "<h2>Informe de proceso de Extract con problemas</h2>";
@@ -144,6 +153,7 @@ public class ExtractService {
 	    if (extracts.get(1).getIdTipoLog() != 6) {//La extract no finalizó con estado éxito. Notificar
 		ProcesoExtract extract = extracts.get(0);
 		Document documentNotificacionExtract = new Document()
+			.append("fechaNotificacion", fechaRegistroNotificacion)
 			.append("descripcion", extract.getDescripcion())
 			.append("fechaCreacion", extract.getFechaCreacion())
 			.append("fechaHoraCreacion", extract.getFechaHoraCreacion())
@@ -185,6 +195,7 @@ public class ExtractService {
 	    if (inicio.getIdTipoLog() == 2 && fin.getIdTipoLog() == 4) { //La extract inició y terminó con error.
 		ProcesoExtract extract = extracts.get(0);
 		Document documentNotificacionExtract = new Document()
+			.append("fechaNotificacion", fechaRegistroNotificacion)
 			.append("descripcion", extract.getDescripcion())
 			.append("fechaCreacion", extract.getFechaCreacion())
 			.append("fechaHoraCreacion", extract.getFechaHoraCreacion())
@@ -221,6 +232,7 @@ public class ExtractService {
 	    if (inicio.getIdTipoLog() != 2) { //No existe un extract de inicio
 		ProcesoExtract extract = extracts.get(0);
 		Document documentNotificacionExtract = new Document()
+			.append("fechaNotificacion", fechaRegistroNotificacion)
 			.append("descripcion", extract.getDescripcion())
 			.append("fechaCreacion", extract.getFechaCreacion())
 			.append("fechaHoraCreacion", extract.getFechaHoraCreacion())
@@ -263,12 +275,14 @@ public class ExtractService {
 	    Document documentoExtract = cursorExtract.next();
 	    NotificacionExtract notificacion = new NotificacionExtract();
 	    notificacion.setLeido(documentoExtract.getBoolean("leido"));
+	    notificacion.set_id(documentoExtract.getObjectId("_id"));
 	    notificacion.setTipoNotificacion(documentoExtract.getString("tipoNotificacion"));
+	    notificacion.setFechaNotificacion(documentoExtract.getString("fechaNotificacion"));
 	    if(!notificacion.getTipoNotificacion().equals("extract-no-iniciado")){
 		ProcesoExtract extract = new ProcesoExtract();
 		extract.setDescripcion(documentoExtract.getString("descripcion"));
-		extract.setFechaCreacion(documentoExtract.getDate("fechaCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-		extract.setFechaHoraCreacion(documentoExtract.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		extract.setFechaCreacion(documentoExtract.getDate("fechaCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDate());
+		extract.setFechaHoraCreacion(documentoExtract.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		extract.setIdEmpresa(documentoExtract.getString("idEmpresa"));
 		extract.setIdLogSistema(documentoExtract.getInteger("idLogSistema"));
 		extract.setMensaje(documentoExtract.getString("mensaje"));
@@ -286,13 +300,15 @@ public class ExtractService {
 	while(cursorExtract.hasNext()){
 	    Document documentoExtract = cursorExtract.next();
 	    NotificacionExtract notificacion = new NotificacionExtract();
+	    notificacion.set_id(documentoExtract.getObjectId("_id"));
 	    notificacion.setLeido(documentoExtract.getBoolean("leido"));
+	    notificacion.setFechaNotificacion(documentoExtract.getString("fechaNotificacion"));
 	    notificacion.setTipoNotificacion(documentoExtract.getString("tipoNotificacion"));
 	    if(!notificacion.getTipoNotificacion().equals("extract-no-iniciado")){
 		ProcesoExtract extract = new ProcesoExtract();
 		extract.setDescripcion(documentoExtract.getString("descripcion"));
-		extract.setFechaCreacion(documentoExtract.getDate("fechaCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-		extract.setFechaHoraCreacion(documentoExtract.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		extract.setFechaCreacion(documentoExtract.getDate("fechaCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDate());
+		extract.setFechaHoraCreacion(documentoExtract.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		extract.setIdEmpresa(documentoExtract.getString("idEmpresa"));
 		extract.setIdLogSistema(documentoExtract.getInteger("idLogSistema"));
 		extract.setMensaje(documentoExtract.getString("mensaje"));
@@ -302,6 +318,13 @@ public class ExtractService {
 	    notificaciones.add(notificacion);
 	}
 	return notificaciones;
+    }
+    
+    public boolean existenNotificacionesHoy(){
+	LocalDateTime fechaActual = LocalDateTime.now();
+	Document documentNotificacion = (Document) getCollection().find(Filters.eq("fechaNotificacion", fechaActual.toLocalDate().toString())).first();
+	System.out.println(documentNotificacion);
+	return documentNotificacion != null;
     }
     
     public void marcarComoLeido(String oid){

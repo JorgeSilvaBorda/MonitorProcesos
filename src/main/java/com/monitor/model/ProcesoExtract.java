@@ -91,4 +91,6 @@ public class ProcesoExtract {
     public void setDescripcion(String descripcion) {
 	this.descripcion = descripcion;
     }
+
+   
 }

@@ -11,6 +11,8 @@ import com.monitor.model.ProcesoConciliacion;
 import com.monitor.util.Parametros;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +40,15 @@ public class ConciliacionService {
     Mailer mailer;
 
     public void buscarConciliacionesProblemasHoy() {
+	LocalDateTime fechaActual = LocalDateTime.now();
+	String fechaRegistroNotificacion = fechaActual.toLocalDate().toString();
+
+	System.out.println("Entra a buscar problemas de conciliación");
 	List<ProcesoConciliacion> conciliaciones = mapper.getConciliacionesHoy();
 	if (conciliaciones.size() == 0) { //No existen conciliaciones generadas dentro del horario exigido. Notificar
+	    System.out.println("No existen conciliaciones generadas dentro del horario exigido");
 	    Document documentNotificacionConciliacion = new Document()
+		    .append("fechaNotificacion", fechaRegistroNotificacion)
 		    .append("tipoNotificacion", "conciliacion-no-iniciada")
 		    .append("leido", false);
 	    getCollection().insertOne(documentNotificacionConciliacion);
@@ -49,7 +57,7 @@ public class ConciliacionService {
 	    String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 	    content += "<h2>Informe de proceso de Conciliacón con problemas</h2>";
 	    content += "<br />";
-	    content += "<p>No se encontraron procesos de conciliación en el horario de su ejecución</p>";
+	    content += "<p>No se encontraron procesos de conciliación en el horario de su ejecución (02:20:00 - 02:25:59)</p>";
 	    content += "<ul>";
 	    content += "</ul>";
 	    content += "<br />";
@@ -58,14 +66,17 @@ public class ConciliacionService {
 	    content += "<p>Este es un mensaje generado automáticamente. Por favor no responda este correo.</p>";
 	    content += "</body></html>";
 
+	    System.out.println("Se envía mail");
 	    //Enviar Mail
 	    sendMail(content);
 	    
 	}
 
 	if (conciliaciones.size() == 1) { //Existe solo una fila. Debería haber dos. Revisar para notificar
+	    System.out.println("Existe solo una fila en conciliación");
 	    ProcesoConciliacion conciliacion = conciliaciones.get(0);
 	    Document documentNotificacionConciliacion = new Document()
+		    .append("fechaNotificacion", fechaRegistroNotificacion)
 		    .append("descripcion", conciliacion.getDescripcion())
 		    .append("fechaCreacion", conciliacion.getFechaCreacion())
 		    .append("fechaHoraCreacion", conciliacion.getFechaHoraCreacion())
@@ -76,7 +87,10 @@ public class ConciliacionService {
 		    .append("nombreEps", conciliacion.getNombreEps())
 		    .append("leido", false);
 	    if (conciliaciones.get(0).getIdTipoLog() == 2) { //Conciliación inició, pero no ha finalizado
+		System.out.println("La conciliación inció, pero no ha finalizado");
 		documentNotificacionConciliacion.append("tipoNotificacion", "conciliacion-iniciada-no-finalizada");
+		getCollection().insertOne(documentNotificacionConciliacion);
+		
 		//Preparar contenido del Mail
 		String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 		content += "<h2>Informe de proceso de Conciliacón con problemas</h2>";
@@ -98,7 +112,10 @@ public class ConciliacionService {
 		sendMail(content);
 	    }
 	    if (conciliaciones.get(0).getIdTipoLog() == 4) { //Conciliación finalizada, pero sin inicio
+		System.out.println("La conciliación tiene solo un registro de error");
 		documentNotificacionConciliacion.append("tipoNotificacion", "conciliacion-finalizada-error-sin-inicio");
+		getCollection().insertOne(documentNotificacionConciliacion);
+		
 		//Preparar contenido del Mail
 		String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 		content += "<h2>Informe de proceso de Conciliacón con problemas</h2>";
@@ -120,7 +137,10 @@ public class ConciliacionService {
 		sendMail(content);
 	    }
 	    if (conciliaciones.get(0).getIdTipoLog() == 6) {
+		System.out.println("La conciliación tiene solo un registro de éxito");
 		documentNotificacionConciliacion.append("tipoNotificacion", "conciliacion-finalizada-sin-inicio");
+		getCollection().insertOne(documentNotificacionConciliacion);
+		
 		//Preparar contenido del Mail
 		String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 		content += "<h2>Informe de proceso de Conciliacón con problemas</h2>";
@@ -144,8 +164,10 @@ public class ConciliacionService {
 	}
 	if (conciliaciones.size() == 2) { //Hay dos filas. Revisar para ver si corresponde.
 	    if (conciliaciones.get(1).getIdTipoLog() != 6) {//La conciliación no finalizó con estado éxito. Notificar
+		System.out.println("La conciliación finalizó con estado de error");
 		ProcesoConciliacion conciliacion = conciliaciones.get(0);
 		Document documentNotificacionConciliacion = new Document()
+			.append("fechaNotificacion", fechaRegistroNotificacion)
 			.append("descripcion", conciliacion.getDescripcion())
 			.append("fechaCreacion", conciliacion.getFechaCreacion())
 			.append("fechaHoraCreacion", conciliacion.getFechaHoraCreacion())
@@ -185,8 +207,10 @@ public class ConciliacionService {
 	    ProcesoConciliacion fin = conciliaciones.get(conciliaciones.size() - 1);
 
 	    if (inicio.getIdTipoLog() == 2 && fin.getIdTipoLog() == 4) { //La conciliación inició y terminó con error.
+		System.out.println("Hay más de dos filas, y la conciliación terminó con error");
 		ProcesoConciliacion conciliacion = conciliaciones.get(0);
 		Document documentNotificacionConciliacion = new Document()
+			.append("fechaNotificacion", fechaRegistroNotificacion)
 			.append("descripcion", conciliacion.getDescripcion())
 			.append("fechaCreacion", conciliacion.getFechaCreacion())
 			.append("fechaHoraCreacion", conciliacion.getFechaHoraCreacion())
@@ -221,8 +245,10 @@ public class ConciliacionService {
 	    }
 
 	    if (inicio.getIdTipoLog() != 2) { //No existe una conciliación de inicio
+		System.out.println("No existe una conciliación de inicio");
 		ProcesoConciliacion conciliacion = conciliaciones.get(0);
 		Document documentNotificacionConciliacion = new Document()
+			.append("fechaNotificacion", fechaRegistroNotificacion)
 			.append("descripcion", conciliacion.getDescripcion())
 			.append("fechaCreacion", conciliacion.getFechaCreacion())
 			.append("fechaHoraCreacion", conciliacion.getFechaHoraCreacion())
@@ -264,13 +290,15 @@ public class ConciliacionService {
 	while(cursorConciliacion.hasNext()){
 	    Document documentoConciliacion = cursorConciliacion.next();
 	    NotificacionConciliacion notificacion = new NotificacionConciliacion();
+	    notificacion.set_id(documentoConciliacion.getObjectId("_id"));
 	    notificacion.setLeido(documentoConciliacion.getBoolean("leido"));
 	    notificacion.setTipoNotificacion(documentoConciliacion.getString("tipoNotificacion"));
+	    notificacion.setFechaNotificacion(documentoConciliacion.getString("fechaNotificacion"));
 	    if(!notificacion.getTipoNotificacion().equals("conciliacion-no-iniciada")){
 		ProcesoConciliacion conciliacion = new ProcesoConciliacion();
 		conciliacion.setDescripcion(documentoConciliacion.getString("descripcion"));
-		conciliacion.setFechaCreacion(documentoConciliacion.getDate("fechaCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-		conciliacion.setFechaHoraCreacion(documentoConciliacion.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		conciliacion.setFechaCreacion(documentoConciliacion.getDate("fechaCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDate());
+		conciliacion.setFechaHoraCreacion(documentoConciliacion.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		conciliacion.setIdEmpresa(documentoConciliacion.getString("idEmpresa"));
 		conciliacion.setIdLogSistema(documentoConciliacion.getInteger("idLogSistema"));
 		conciliacion.setMensaje(documentoConciliacion.getString("mensaje"));
@@ -288,13 +316,15 @@ public class ConciliacionService {
 	while(cursorConciliacion.hasNext()){
 	    Document documentoConciliacion = cursorConciliacion.next();
 	    NotificacionConciliacion notificacion = new NotificacionConciliacion();
+	    notificacion.set_id(documentoConciliacion.getObjectId("_id"));
 	    notificacion.setLeido(documentoConciliacion.getBoolean("leido"));
 	    notificacion.setTipoNotificacion(documentoConciliacion.getString("tipoNotificacion"));
+	    notificacion.setFechaNotificacion(documentoConciliacion.getString("fechaNotificacion"));
 	    if(!notificacion.getTipoNotificacion().equals("conciliacion-no-iniciada")){
 		ProcesoConciliacion conciliacion = new ProcesoConciliacion();
 		conciliacion.setDescripcion(documentoConciliacion.getString("descripcion"));
-		conciliacion.setFechaCreacion(documentoConciliacion.getDate("fechaCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-		conciliacion.setFechaHoraCreacion(documentoConciliacion.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+		conciliacion.setFechaCreacion(documentoConciliacion.getDate("fechaCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDate());
+		conciliacion.setFechaHoraCreacion(documentoConciliacion.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		conciliacion.setIdEmpresa(documentoConciliacion.getString("idEmpresa"));
 		conciliacion.setIdLogSistema(documentoConciliacion.getInteger("idLogSistema"));
 		conciliacion.setMensaje(documentoConciliacion.getString("mensaje"));
@@ -304,6 +334,13 @@ public class ConciliacionService {
 	    notificaciones.add(notificacion);
 	}
 	return notificaciones;
+    }
+    
+    public boolean existenNotificacionesHoy(){
+	LocalDateTime fechaActual = LocalDateTime.now();
+	
+	Document documentNotificacion = (Document) getCollection().find(Filters.eq("fechaNotificacion", fechaActual.toLocalDate().toString())).first();
+	return documentNotificacion != null;
     }
     
     public void marcarComoLeido(String oid){

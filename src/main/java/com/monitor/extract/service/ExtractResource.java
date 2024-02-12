@@ -29,7 +29,7 @@ public class ExtractResource {
     @Path("/notificacion/noleido")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    List<NotificacionExtract> getNoLeido(){
+    public List<NotificacionExtract> getNoLeido(){
 	return service.getNotificacionesExtractNoLeidas();
     }
     
