@@ -11,7 +11,6 @@ import com.monitor.model.ProcesoExtract;
 import com.monitor.util.Parametros;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -25,19 +24,20 @@ import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class ExtractService {
+
     private final String DATABASE = ConfigProvider.getConfig().getValue("application.database", String.class);
     private final String COLLECTION = ConfigProvider.getConfig().getValue("application.notificaciones.extract.collection", String.class);
     private static final Logger LOG = Logger.getLogger(ExtractService.class);
-    
+
     @Inject
     ExtractMapper mapper;
-    
+
     @Inject
     MongoClient mongoClient;
 
     @Inject
     Mailer mailer;
-    
+
     public void buscarExtractProblemasHoy() {
 	LocalDateTime fechaActual = LocalDateTime.now();
 	String fechaRegistroNotificacion = fechaActual.toLocalDate().toString();
@@ -53,7 +53,7 @@ public class ExtractService {
 	    String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 	    content += "<h2>Informe de proceso de Extract con problemas</h2>";
 	    content += "<br />";
-	    content += "<p>No se encontraron procesos de extract en el horario de su ejecución (01:20:00 - 01:25:59)</p>";
+	    content += "<p>No se encontraron procesos de extract en el horario de su ejecución (02:20:00 - 02:25:59)</p>";
 	    content += "<ul>";
 	    content += "</ul>";
 	    content += "<br />";
@@ -63,7 +63,7 @@ public class ExtractService {
 	    content += "</body></html>";
 
 	    //Enviar Mail
-	    sendMail(content);
+	    sendMail(content, LocalDateTime.now().toString());
 	}
 
 	if (extracts.size() == 1) { //Existe solo una fila. Debería haber dos. Revisar para notificar
@@ -100,7 +100,7 @@ public class ExtractService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, LocalDateTime.now().toString());
 	    }
 	    if (extracts.get(0).getIdTipoLog() == 4) { //Extract finalizado, pero sin inicio
 		documentNotificacionExtract.append("tipoNotificacion", "extract-finalizado-error-sin-inicio");
@@ -123,7 +123,7 @@ public class ExtractService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, LocalDateTime.now().toString());
 	    }
 	    if (extracts.get(0).getIdTipoLog() == 6) {
 		documentNotificacionExtract.append("tipoNotificacion", "extract-finalizado-sin-inicio");
@@ -146,7 +146,7 @@ public class ExtractService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, LocalDateTime.now().toString());
 	    }
 	}
 	if (extracts.size() == 2) { //Hay dos filas. Revisar para ver si corresponde.
@@ -184,7 +184,7 @@ public class ExtractService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, LocalDateTime.now().toString());
 	    }
 	}
 
@@ -224,9 +224,9 @@ public class ExtractService {
 		content += "<br />";
 		content += "<p>Este es un mensaje generado automáticamente. Por favor no responda este correo.</p>";
 		content += "</body></html>";
-		
+
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, LocalDateTime.now().toString());
 	    }
 
 	    if (inicio.getIdTipoLog() != 2) { //No existe un extract de inicio
@@ -261,30 +261,31 @@ public class ExtractService {
 		content += "<br />";
 		content += "<p>Este es un mensaje generado automáticamente. Por favor no responda este correo.</p>";
 		content += "</body></html>";
-		
+
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, LocalDateTime.now().toString());
 	    }
 	}
     }
-    
-    public List<NotificacionExtract> getNotificacionesExtract(){
+
+    public List<NotificacionExtract> getNotificacionesExtract() {
 	MongoCursor<Document> cursorExtract = getCollection().find().iterator();
 	List<NotificacionExtract> notificaciones = new ArrayList();
-	while(cursorExtract.hasNext()){
+	while (cursorExtract.hasNext()) {
 	    Document documentoExtract = cursorExtract.next();
 	    NotificacionExtract notificacion = new NotificacionExtract();
 	    notificacion.setLeido(documentoExtract.getBoolean("leido"));
 	    notificacion.set_id(documentoExtract.getObjectId("_id"));
 	    notificacion.setTipoNotificacion(documentoExtract.getString("tipoNotificacion"));
 	    notificacion.setFechaNotificacion(documentoExtract.getString("fechaNotificacion"));
-	    if(!notificacion.getTipoNotificacion().equals("extract-no-iniciado")){
+	    if (!notificacion.getTipoNotificacion().equals("extract-no-iniciado")) {
 		ProcesoExtract extract = new ProcesoExtract();
 		extract.setDescripcion(documentoExtract.getString("descripcion"));
 		extract.setFechaCreacion(documentoExtract.getDate("fechaCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDate());
 		extract.setFechaHoraCreacion(documentoExtract.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		extract.setIdEmpresa(documentoExtract.getString("idEmpresa"));
 		extract.setIdLogSistema(documentoExtract.getInteger("idLogSistema"));
+		extract.setIdTipoLog(documentoExtract.getInteger("idTipoLog"));
 		extract.setMensaje(documentoExtract.getString("mensaje"));
 		extract.setNombreEps(documentoExtract.getString("nombreEps"));
 		notificacion.setExtract(extract);
@@ -293,24 +294,25 @@ public class ExtractService {
 	}
 	return notificaciones;
     }
-    
-    public List<NotificacionExtract> getNotificacionesExtractNoLeidas(){
+
+    public List<NotificacionExtract> getNotificacionesExtractNoLeidas() {
 	MongoCursor<Document> cursorExtract = getCollection().find(Filters.eq("leido", false)).iterator();
 	List<NotificacionExtract> notificaciones = new ArrayList();
-	while(cursorExtract.hasNext()){
+	while (cursorExtract.hasNext()) {
 	    Document documentoExtract = cursorExtract.next();
 	    NotificacionExtract notificacion = new NotificacionExtract();
 	    notificacion.set_id(documentoExtract.getObjectId("_id"));
 	    notificacion.setLeido(documentoExtract.getBoolean("leido"));
 	    notificacion.setFechaNotificacion(documentoExtract.getString("fechaNotificacion"));
 	    notificacion.setTipoNotificacion(documentoExtract.getString("tipoNotificacion"));
-	    if(!notificacion.getTipoNotificacion().equals("extract-no-iniciado")){
+	    if (!notificacion.getTipoNotificacion().equals("extract-no-iniciado")) {
 		ProcesoExtract extract = new ProcesoExtract();
 		extract.setDescripcion(documentoExtract.getString("descripcion"));
 		extract.setFechaCreacion(documentoExtract.getDate("fechaCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDate());
 		extract.setFechaHoraCreacion(documentoExtract.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		extract.setIdEmpresa(documentoExtract.getString("idEmpresa"));
 		extract.setIdLogSistema(documentoExtract.getInteger("idLogSistema"));
+		extract.setIdTipoLog(documentoExtract.getInteger("idTipoLog"));
 		extract.setMensaje(documentoExtract.getString("mensaje"));
 		extract.setNombreEps(documentoExtract.getString("nombreEps"));
 		notificacion.setExtract(extract);
@@ -319,36 +321,38 @@ public class ExtractService {
 	}
 	return notificaciones;
     }
-    
-    public boolean existenNotificacionesHoy(){
+
+    public boolean existenNotificacionesHoy() {
 	LocalDateTime fechaActual = LocalDateTime.now();
 	Document documentNotificacion = (Document) getCollection().find(Filters.eq("fechaNotificacion", fechaActual.toLocalDate().toString())).first();
 	System.out.println(documentNotificacion);
 	return documentNotificacion != null;
     }
-    
-    public void marcarComoLeido(String oid){
+
+    public void marcarComoLeido(String oid) {
 	Document documentoNotificacion = (Document) getCollection().find(Filters.eq("_id", new ObjectId(oid))).first();
-	if(documentoNotificacion != null){
+	if (documentoNotificacion != null) {
 	    getCollection().updateOne(eq("_id", new ObjectId(oid)), Updates.set("leido", true));
 	}
     }
-    
-    public void marcarVariosComoLeido(String[] oids){
-	for(String oid : oids){
+
+    public void marcarVariosComoLeido(String[] oids) {
+	for (String oid : oids) {
 	    marcarComoLeido(oid);
 	}
     }
-    
+
     private MongoCollection getCollection() {
 	return mongoClient.getDatabase(DATABASE).getCollection(COLLECTION);
     }
 
-    private void sendMail(String contenido) {
+    private void sendMail(String contenido, String fechaHoraProceso) {
 	LOG.info("Se ingresa a enviar mail");
 	String destinatarios = new Parametros().getDestinatarios();
 	LOG.info("Los destinatarios de Mail son los siguientes:");
 	LOG.info(destinatarios);
+	fechaHoraProceso = fechaHoraProceso.replace("T", " ");
+	fechaHoraProceso = fechaHoraProceso.substring(0, 19);
 
 	String content = contenido;
 
@@ -358,7 +362,7 @@ public class ExtractService {
 	if (tos.length > 0) {
 	    Mail correo = new Mail();
 	    correo.setFrom("reporte@reporte.unired.cl");
-	    correo.setSubject("¡ATENCIÓN! - PROBLEMAS EN PROCESO EXTRACT #");
+	    correo.setSubject("¡ATENCIÓN! - PROBLEMAS EN PROCESO EXTRACT. Fecha: " + fechaHoraProceso);
 	    correo.setText(content);
 
 	    for (String dest : tos) {

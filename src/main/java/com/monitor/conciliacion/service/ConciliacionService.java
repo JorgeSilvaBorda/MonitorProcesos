@@ -11,7 +11,6 @@ import com.monitor.model.ProcesoConciliacion;
 import com.monitor.util.Parametros;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -57,7 +56,7 @@ public class ConciliacionService {
 	    String content = "<html><body style='{font-family: Arial, sans-serif;}'>";
 	    content += "<h2>Informe de proceso de Conciliacón con problemas</h2>";
 	    content += "<br />";
-	    content += "<p>No se encontraron procesos de conciliación en el horario de su ejecución (02:20:00 - 02:25:59)</p>";
+	    content += "<p>No se encontraron procesos de conciliación en el horario de su ejecución (01:20:00 - 01:25:59)</p>";
 	    content += "<ul>";
 	    content += "</ul>";
 	    content += "<br />";
@@ -68,7 +67,7 @@ public class ConciliacionService {
 
 	    System.out.println("Se envía mail");
 	    //Enviar Mail
-	    sendMail(content);
+	    sendMail(content, fechaActual.toString());
 	    
 	}
 
@@ -109,7 +108,7 @@ public class ConciliacionService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, fechaActual.toString());
 	    }
 	    if (conciliaciones.get(0).getIdTipoLog() == 4) { //Conciliación finalizada, pero sin inicio
 		System.out.println("La conciliación tiene solo un registro de error");
@@ -134,7 +133,7 @@ public class ConciliacionService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, fechaActual.toString());
 	    }
 	    if (conciliaciones.get(0).getIdTipoLog() == 6) {
 		System.out.println("La conciliación tiene solo un registro de éxito");
@@ -159,7 +158,7 @@ public class ConciliacionService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, fechaActual.toString());
 	    }
 	}
 	if (conciliaciones.size() == 2) { //Hay dos filas. Revisar para ver si corresponde.
@@ -198,7 +197,7 @@ public class ConciliacionService {
 		content += "</body></html>";
 
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, fechaActual.toString());
 	    }
 	}
 
@@ -241,7 +240,7 @@ public class ConciliacionService {
 		content += "</body></html>";
 		
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, fechaActual.toString());
 	    }
 
 	    if (inicio.getIdTipoLog() != 2) { //No existe una conciliación de inicio
@@ -279,7 +278,7 @@ public class ConciliacionService {
 		content += "</body></html>";
 		
 		//Enviar Mail
-		sendMail(content);
+		sendMail(content, fechaActual.toString());
 	    }
 	}
     }
@@ -301,6 +300,7 @@ public class ConciliacionService {
 		conciliacion.setFechaHoraCreacion(documentoConciliacion.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		conciliacion.setIdEmpresa(documentoConciliacion.getString("idEmpresa"));
 		conciliacion.setIdLogSistema(documentoConciliacion.getInteger("idLogSistema"));
+		conciliacion.setIdTipoLog(documentoConciliacion.getInteger("idTipoLog"));
 		conciliacion.setMensaje(documentoConciliacion.getString("mensaje"));
 		conciliacion.setNombreEps(documentoConciliacion.getString("nombreEps"));
 		notificacion.setConciliacion(conciliacion);
@@ -327,6 +327,7 @@ public class ConciliacionService {
 		conciliacion.setFechaHoraCreacion(documentoConciliacion.getDate("fechaHoraCreacion").toInstant().atZone(ZoneId.of("America/Santiago")).toLocalDateTime());
 		conciliacion.setIdEmpresa(documentoConciliacion.getString("idEmpresa"));
 		conciliacion.setIdLogSistema(documentoConciliacion.getInteger("idLogSistema"));
+		conciliacion.setIdTipoLog(documentoConciliacion.getInteger("idTipoLog"));
 		conciliacion.setMensaje(documentoConciliacion.getString("mensaje"));
 		conciliacion.setNombreEps(documentoConciliacion.getString("nombreEps"));
 		notificacion.setConciliacion(conciliacion);
@@ -360,11 +361,13 @@ public class ConciliacionService {
 	return mongoClient.getDatabase(DATABASE).getCollection(COLLECTION);
     }
 
-    private void sendMail(String contenido) {
+    private void sendMail(String contenido, String fechaHoraProceso) {
 	LOG.info("Se ingresa a enviar mail");
 	String destinatarios = new Parametros().getDestinatarios();
 	LOG.info("Los destinatarios de Mail son los siguientes:");
 	LOG.info(destinatarios);
+	fechaHoraProceso = fechaHoraProceso.replace("T", " ");
+	fechaHoraProceso = fechaHoraProceso.substring(0, 19);
 
 	String content = contenido;
 
@@ -374,7 +377,7 @@ public class ConciliacionService {
 	if (tos.length > 0) {
 	    Mail correo = new Mail();
 	    correo.setFrom("reporte@reporte.unired.cl");
-	    correo.setSubject("¡ATENCIÓN! - PROBLEMAS EN PROCESO CONCILIACIÓN #");
+	    correo.setSubject("¡ATENCIÓN! - PROBLEMAS EN PROCESO CONCILIACIÓN. Fecha: " + fechaHoraProceso);
 	    correo.setText(content);
 
 	    for (String dest : tos) {
