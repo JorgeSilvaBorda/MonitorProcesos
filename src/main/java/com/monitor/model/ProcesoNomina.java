@@ -1,4 +1,4 @@
-package com.monitor.model;
+    package com.monitor.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;

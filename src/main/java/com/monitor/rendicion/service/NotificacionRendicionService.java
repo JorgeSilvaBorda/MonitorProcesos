@@ -79,7 +79,6 @@ public class NotificacionRendicionService {
 	    ex.printStackTrace();
 	    System.out.println(ex);
 	}
-	System.out.println(notificaciones.size());
 	return notificaciones;
     }
 

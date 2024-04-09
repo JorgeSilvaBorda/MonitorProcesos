@@ -56,7 +56,7 @@ public class RendicionService {
 		.find(Filters.eq("idProceso", idProceso))
 		.sort(Sorts.descending("fechaHoraConsulta"))
 		.first();
-	System.out.println(rendicionDocument);
+
 	if (rendicionDocument == null) {
 	    return null;
 	}
